@@ -1,9 +1,12 @@
 #!/usr/bin/ruby
+module Ripple
 require 'fileutils'
 require 'yaml'
 require "rubygems"
 require 'dropbox_sdk'
 
+ACCESS_TYPE = :app_folder
+def sync()
 conf = {:destinationDir => './test',
         :cleanDestiation => false}
 
@@ -39,7 +42,6 @@ if conf.has_key?(:cleanDestination)
 end
 
 session = nil
-ACCESS_TYPE = :app_folder
 
 if File.exists?('dropbox_session.yaml')
   deser = File.open('dropbox_session.yaml').read
@@ -67,4 +69,6 @@ end
 
 File.open('ripple.yaml', 'w') do |file|
   file.puts conf.to_yaml
+end
+end
 end
