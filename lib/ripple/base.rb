@@ -6,9 +6,16 @@ module Ripple
   require 'dropbox_sdk'
 
   ACCESS_TYPE = :app_folder
+  Ripple.DefaultConfiguration = {
+    :destinationDir => './test',
+    :cleanDestination => false,
+    :dropbox => {
+      :sync => ['**'],
+    }
+  }
+
   def Ripple.sync
-    conf = {:destinationDir => './test',
-      :cleanDestiation => false}
+    conf = Ripple.DefaultConfiguration.dup 
 
     # Load configuration.
     if File.exists?('ripple.yaml')
