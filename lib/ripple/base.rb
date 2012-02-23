@@ -8,7 +8,6 @@ module Ripple
   ACCESS_TYPE = :app_folder
   DefaultConfiguration = {
     :destinationDir => './test',
-    :cleanDestination => false,
     :dropbox => {
       :sync => ['**'],
     }
@@ -96,16 +95,6 @@ module Ripple
     end
 
     destDir = conf[:destinationDir]
-
-    if conf.has_key?(:cleanDestination)
-      if conf[:cleanDestination]
-        files = Dir.glob(destDir + "**")
-
-        if files.empty?
-          FileUtils.rm(files)
-        end
-      end
-    end
 
     print files
   end
