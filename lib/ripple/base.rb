@@ -78,24 +78,61 @@ module Ripple
     end
   end
 
+  def Ripple.walkDropbox(client, path, fileState, oldFileState)
+    #Here we need to actually sync newest files.
+    areNewFiles = false
+    begin
+      oldState = oldFileState.has_key?(path) ? oldFileState[path] : nil
+      fileState[path] = client.metadata(path, 10000, true, oldState)
+      areNewFiles = true
+    rescue DropboxNotModified
+      if oldFileState.has_key?(path)
+        fileState[path] = oldFileState[path]
+      end
+    end
+
+    if !areNewFiles
+      return nil
+    end
+
+    files = []
+    if fileState[path]["is_dir"] and fileState[path].has_key?("contents")
+      fileState[path]["contents"].each { |x|
+        subs = Ripple.walkDropbox(client, x["path"], fileState, oldFileState)
+        if !subs.nil?
+          files = files + subs
+        end
+      }
+    else
+      files = [fileState[path]["path"]]
+    end
+
+    return files
+  end
+
   def Ripple.sync
     conf = Ripple.loadConfiguration()
-    session, client, dropboxKeys = Ripple.connectToDropbox()
+    begin
+      session, client, dropboxKeys = Ripple.connectToDropbox()
+    rescue DropboxAuthError
+      puts "Dropbox authorization failed."
+      Ripple.cleanup(conf, dropboxKeys)
+      return
+    end
    
     if session.nil?
       puts "Could not connect to Dropbox."
       Ripple.cleanup(conf, dropboxKeys)
+      return
     end 
-
-    #Here we need to actually sync newest files.
-    begin
-      files = client.metadata('/', 10000, true, dropboxKeys[:files])
-    rescue DropboxNotModified
-      files = nil
-    end
 
     destDir = conf[:destinationDir]
 
-    print files
+    fileState = {}
+    oldFileState = {}
+    files = Ripple.walkDropbox(client, '/', fileState, oldFileState)
+    p files
+
+    Ripple.cleanup(conf, dropboxKeys)
   end
 end
