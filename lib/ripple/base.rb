@@ -6,7 +6,7 @@ module Ripple
   require 'dropbox_sdk'
 
   ACCESS_TYPE = :app_folder
-  def sync()
+  def Ripple.sync
     conf = {:destinationDir => './test',
       :cleanDestiation => false}
 
