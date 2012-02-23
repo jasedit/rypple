@@ -82,7 +82,7 @@ module Ripple
     print files
 
     File.open('dropbox_session.yaml', 'w') do|file|
-      file.puts state
+      file.puts state.to_yaml
     end
 
     File.open('ripple.yaml', 'w') do |file|
