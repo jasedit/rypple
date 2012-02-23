@@ -1,0 +1,5 @@
+--- 
+:destinationDir: ./test
+:dropbox: 
+  :sync: 
+  - "**"
