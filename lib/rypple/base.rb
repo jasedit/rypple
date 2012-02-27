@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 module Rypple
   require 'fileutils'
+  require 'ftools'
   require 'yaml'
   require "rubygems"
   require 'dropbox_sdk'
@@ -107,20 +108,19 @@ module Rypple
       return nil
     end
 
-    files = { states["path"] => states }
+    files = {}
     #State represents a folder
     if states["is_dir"] and states.has_key?("contents")
       states["contents"].each{ |xx|
-        if !xx.nil?
-          files[xx["path"]] = xx
-        end
         useState = (!oldFileState.nil? and oldFileState.has_key?(xx["path"]))
-        old = (useState ? oldFileState[xx["path"]]["hash"] : nil)
+        old = (useState ? oldFileState[xx["path"]] : nil)
         subs = Rypple.walkDropbox(client, xx["path"], fileState, old)
         if !subs.nil?
           files.merge!(subs)
         end
       }
+    else
+      files[states['path']] = states
     end
     
     return files
@@ -155,7 +155,9 @@ module Rypple
     if !files.nil?
       files.keys.each { |x|
         file = client.get_file(x)
-        File.open(File.join(destDir, x), 'w') {|f| f.puts file}
+        dest = File.join(destDir, x)
+        File.makedirs(File.dirname(dest))
+        File.open(dest, 'w') {|f| f.puts file}
       }
     end
 
