@@ -152,10 +152,7 @@ module Ripple
     oldFileState = dropboxKeys[:files]
     files = Ripple.walkDropbox(client, '/', fileState, oldFileState)
 
-    if files.nil?
-      files = oldFileState
-      Ripple.cleanup(conf, dropboxKeys, path)
-    else
+    if !files.nil?
       files.keys.each { |x|
         puts "Getting", x
         file = client.get_file(x)
