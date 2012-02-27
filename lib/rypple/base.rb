@@ -1,5 +1,5 @@
 #!/usr/bin/ruby
-module Ripple
+module Rypple
   require 'fileutils'
   require 'yaml'
   require "rubygems"
@@ -15,9 +15,9 @@ module Ripple
   }
 
   DropboxKeyFile = "dropbox_session.yaml"
-  RippleConfigFile = "ripple.yaml"
+  RyppleConfigFile = "rypple.yaml"
 
-  def Ripple.connectToDropbox(path)
+  def Rypple.connectToDropbox(path)
     dropConf = File.join(path, DropboxKeyFile)
     #Load Dropbox API dropboxKeys from file, if applicable.
     if File.exists?(dropConf)
@@ -61,13 +61,13 @@ module Ripple
     end
   end
 
-  def Ripple.loadConfiguration(path)
-    conf = Ripple::DefaultConfiguration.dup 
+  def Rypple.loadConfiguration(path)
+    conf = Rypple::DefaultConfiguration.dup 
 
-    ripConf = File.join(path, RippleConfigFile)
+    rypConf = File.join(path, RyppleConfigFile)
     # Load configuration and override any values that differ from the default.
-    if File.exists?(ripConf)
-      loadedConf = YAML::load(File.read(ripConf))
+    if File.exists?(rypConf)
+      loadedConf = YAML::load(File.read(rypConf))
       conf.merge!(loadedConf)
     end
 
@@ -82,21 +82,21 @@ module Ripple
     return conf
   end
 
-  def Ripple.cleanup(conf, keys, path)
+  def Rypple.cleanup(conf, keys, path)
     dropConfig = File.join(path, DropboxKeyFile)
     File.open(dropConfig, 'w') do|file|
       file.puts keys.to_yaml
     end
 
-    rippleConf = File.join(path, RippleConfigFile)
-    File.open(rippleConf, 'w') do |file|
+    ryppleConf = File.join(path, RyppleConfigFile)
+    File.open(ryppleConf, 'w') do |file|
       file.puts conf.to_yaml
     end
   end
 
   # Iterates over dropbox directory, returing paths and state hash for each file
   # oldFileState should be a hash of paths to state hashes, same as return values
-  def Ripple.walkDropbox(client, path, fileState, oldFileState)
+  def Rypple.walkDropbox(client, path, fileState, oldFileState)
     #Here we need to actually sync newest files.
     begin
       useState = (!oldFileState.nil? and oldFileState.has_key?(path) and oldFileState[path]["path"] == path)
@@ -116,7 +116,7 @@ module Ripple
         end
         useState = (!oldFileState.nil? and oldFileState.has_key?(xx["path"]))
         old = (useState ? oldFileState[xx["path"]]["hash"] : nil)
-        subs = Ripple.walkDropbox(client, xx["path"], fileState, old)
+        subs = Rypple.walkDropbox(client, xx["path"], fileState, old)
         if !subs.nil?
           files.merge!(subs)
         end
@@ -126,23 +126,23 @@ module Ripple
     return files
   end
 
-  def Ripple.sync(path = "")
-    conf = Ripple.loadConfiguration(path)
+  def Rypple.sync(path = "")
+    conf = Rypple.loadConfiguration(path)
     begin
-      session, client, dropboxKeys = Ripple.connectToDropbox(path)
+      session, client, dropboxKeys = Rypple.connectToDropbox(path)
     rescue DropboxAuthError
       puts "Dropbox authorization failed."
-      Ripple.cleanup(conf, dropboxKeys, path)
+      Rypple.cleanup(conf, dropboxKeys, path)
       return
     rescue NameError
       puts "Destination does not exist."
-      Ripple.cleanup(conf, dropboxKeys, path)
+      Rypple.cleanup(conf, dropboxKeys, path)
       return
     end
    
     if session.nil?
       puts "Could not connect to Dropbox."
-      Ripple.cleanup(conf, dropboxKeys, path)
+      Rypple.cleanup(conf, dropboxKeys, path)
       return
     end 
 
@@ -150,7 +150,7 @@ module Ripple
 
     fileState = {}
     oldFileState = dropboxKeys[:files]
-    files = Ripple.walkDropbox(client, '/', fileState, oldFileState)
+    files = Rypple.walkDropbox(client, '/', fileState, oldFileState)
 
     if !files.nil?
       files.keys.each { |x|
@@ -173,8 +173,8 @@ module Ripple
       }
     }
 
-    dropboxKeys[:files] = Ripple.walkDropbox(client, '/', fileState, {})
-    Ripple.cleanup(conf, dropboxKeys, path)
+    dropboxKeys[:files] = Rypple.walkDropbox(client, '/', fileState, {})
+    Rypple.cleanup(conf, dropboxKeys, path)
 
     return true
   end

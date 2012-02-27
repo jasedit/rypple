@@ -1,14 +1,14 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
-require "lib/ripple/version"
+require "lib/rypple/version"
 
 Gem::Specification.new do |s|
-  s.name          = "ripple"
-  s.version       = Ripple::VERSION
+  s.name          = "rypple"
+  s.version       = Rypple::VERSION
   s.platform      = Gem::Platform::RUBY
   s.authors       = ["Jason Ziglar"]
   s.email         = ["jasedit@catexia.com"]
-  s.homepage      = "https://github.com/jasedit/ripple"
+  s.homepage      = "https://github.com/jasedit/rypple"
   s.summary       = %q{Dropbox interface for jekyll.}
   s.description   = %q{A gem providing a Dropbox syncing interface for jekyll, along with a cgi file to update jekyll.}
 

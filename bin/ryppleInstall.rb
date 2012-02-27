@@ -1,6 +1,6 @@
 #!/bin/ruby
 require 'rubygems'
-require 'ripple'
+require 'rypple'
 
 baseCGI = <<'eos'
 #!/usr/bin/ruby
@@ -16,7 +16,7 @@ end
 
 require 'cgi'
 require 'rubygems'
-require 'ripple'
+require 'rypple'
 require 'jekyll'
 
 cgi = CGI.new
@@ -24,7 +24,7 @@ cgi = CGI.new
 puts cgi.header
 
 puts "<h1>Rippling . . .</h1>"
-if Ripple.sync(configPath)
+if Rypple.sync(configPath)
   puts "<h1>Generating Static Site</h1>"
   puts `%%COMMAND #{inDir} #{outDir}`
 end
@@ -33,38 +33,38 @@ eos
 updateHTML = <<'eos'
 <html>
   <head>
-    <title>Update Site with Ripple!</title>
+    <title>Update Site with Rypple!</title>
   </head>
   <body>
     <h1> Throw a stone into the pond..</h1>
     <form action="update.cgi" method="POST">
-      <input type="submit" value="Ripple">
+      <input type="submit" value="Rypple">
     </form>
   </body>
 </html>
 eos
 
 htaccess = <<'eos'
-AuthName "Ripple Updater"
+AuthName "Rypple Updater"
 AuthType Basic
 AuthUserFile %%AUTH_FILE
 Require valid-user
 eos
 
-configBase = File.join(ENV["HOME"], '.ripple')
-puts "Configuring the Ripple update script for web use."
-puts "Please enter directory for Ripple Configuration. Default:", configBase
+configBase = File.join(ENV["HOME"], '.rypple')
+puts "Configuring the Rypple update script for web use."
+puts "Please enter directory for Rypple Configuration. Default:", configBase
 directory = gets.chomp!
 
 if !directory.empty?
   configBase = directory
 end
 
-conf = Ripple.loadConfiguration(configBase)
-session, client, keys = Ripple.connectToDropbox(configBase)
+conf = Rypple.loadConfiguration(configBase)
+session, client, keys = Rypple.connectToDropbox(configBase)
 
 if !conf.nil? and !keys.nil?
-  Ripple.cleanup(conf, keys, configBase)
+  Rypple.cleanup(conf, keys, configBase)
 end
 
 baseCGI.gsub!(/%%CONFIG_PATH/, configBase)
@@ -129,19 +129,19 @@ if File.exists?(command)
   baseCGI.gsub!(/%%COMMAND/, command + ' ' + args)
 end
 
-rippleDir = File.join(inDir, 'ripple')
+ryppleDir = File.join(inDir, 'rypple')
 
-if !File.exists?(rippleDir)
+if !File.exists?(ryppleDir)
   begin
-    Dir.mkdir(rippleDir)
+    Dir.mkdir(ryppleDir)
   rescue SystemCallError
-    "Cannot create ripple directory."
+    "Cannot create rypple directory."
   end
 end
 
-File.open(File.join(rippleDir, 'update.html'), 'w', 0644) { |f| f.puts updateHTML }
+File.open(File.join(ryppleDir, 'update.html'), 'w', 0644) { |f| f.puts updateHTML }
 
-out = File.join(rippleDir, 'update.cgi')
+out = File.join(ryppleDir, 'update.cgi')
 File.open(out, 'w', 0755) { |f| f.puts baseCGI }
 
 puts "Should I enable basic user authentication for the update script? (Y/n):"
@@ -157,13 +157,13 @@ if answer.nil? or answer.empty? or answer.downcase! == 'y'
   authFile = File.join(configBase, '.htpasswd')
   File.open(authFile, 'w') { |f| f.puts "#{user}:#{pass}" }
   htaccess.gsub!(/%%AUTH_FILE/, authFile)
-  File.open(File.join(rippleDir, '.htaccess'), 'w') { |f| f.puts htaccess }
+  File.open(File.join(ryppleDir, '.htaccess'), 'w') { |f| f.puts htaccess }
 end
 
 puts "Attempting first update"
 
-if Ripple.sync(configBase)
+if Rypple.sync(configBase)
   puts `jekyll #{inDir} #{outDir}`
 else
-  puts "Ripple sync failed."
+  puts "Rypple sync failed."
 end
