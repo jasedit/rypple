@@ -37,11 +37,18 @@ updateHTML = <<'eos'
   </head>
   <body>
     <h1> Throw a stone into the pond..</h1>
-    <form action="cgi-bin/update.cgi" method="POST">
+    <form action="update.cgi" method="POST">
       <input type="submit" value="Ripple">
     </form>
   </body>
 </html>
+eos
+
+htaccess = <<'eos'
+AuthName "Ripple Updater"
+AuthType Basic
+AuthUserFile %%AUTH_FILE
+Require valid-user
 eos
 
 configBase = File.join(ENV["HOME"], '.ripple')
@@ -122,19 +129,36 @@ if File.exists?(command)
   baseCGI.gsub!(/%%COMMAND/, command + ' ' + args)
 end
 
-installDir = File.join(inDir, 'cgi-bin')
-if !File.exists?(installDir)
+rippleDir = File.join(inDir, 'ripple')
+
+if !File.exists?(rippleDir)
   begin
-    Dir.mkdir(installDir)
+    Dir.mkdir(rippleDir)
   rescue SystemCallError
-    puts "Cannot create installation directory", installDir
-    exit
+    "Cannot create ripple directory."
   end
 end
 
-out = File.join(installDir, 'update.cgi')
+File.open(File.join(rippleDir, 'update.html'), 'w', 0644) { |f| f.puts updateHTML }
+
+out = File.join(rippleDir, 'update.cgi')
 File.open(out, 'w', 0755) { |f| f.puts baseCGI }
-File.open(File.join(inDir, 'update.html'), 'w', 0644) { |f| f.puts updateHTML }
+
+puts "Should I enable basic user authentication for the update script? (Y/n):"
+
+answer = gets.chomp!
+if answer.nil? or answer.empty? or answer.downcase! == 'y'
+  print "Enter user name for authentication:"
+  user = gets.chomp!
+  print "Enter password for authentication:"
+  chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
+  salt = chars[rand(chars.size - 1)] + chars[rand(chars.size - 1)]
+  pass = gets.chomp!.crypt(salt)
+  authFile = File.join(configBase, '.htpasswd')
+  File.open(authFile, 'w') { |f| f.puts "#{user}:#{pass}" }
+  htaccess.gsub!(/%%AUTH_FILE/, authFile)
+  File.open(File.join(rippleDir, '.htaccess'), 'w') { |f| f.puts htaccess }
+end
 
 puts "Attempting first update"
 

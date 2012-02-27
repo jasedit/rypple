@@ -154,7 +154,6 @@ module Ripple
 
     if !files.nil?
       files.keys.each { |x|
-        puts "Getting", x
         file = client.get_file(x)
         File.open(File.join(destDir, x), 'w') {|f| f.puts file}
       }
@@ -163,12 +162,12 @@ module Ripple
     conf[:dropbox][:sync].each { |ii|
       Dir.glob(File.join(destDir, ii)).each { |oo|
         if !File.directory?(oo)
-          up = File.open(oo)
           upName = Pathname.new(oo).relative_path_from(Pathname.new(destDir)).to_s
           upName = File.join("", upName)
           if files.nil? or !files.has_key?(upName)
-            puts "Sending", upName
+            up = File.open(oo)
             client.put_file(upName, up, true)
+            up.close()
           end
         end
       }
