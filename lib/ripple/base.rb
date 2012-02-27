@@ -4,6 +4,7 @@ module Ripple
   require 'yaml'
   require "rubygems"
   require 'dropbox_sdk'
+  require 'pathname'
 
   ACCESS_TYPE = :app_folder
   DefaultConfiguration = {
@@ -65,6 +66,14 @@ module Ripple
       conf.merge!(loadedConf)
     end
 
+    conf[:destinationDir] = File.expand_path(conf[:destinationDir])
+    if !File.directory?(conf[:destinationDir])
+      begin
+        Dir.mkdir(conf[:destinationDir])
+      rescue SystemCallError
+        raise RuntimeError, "Destination doesn't exist and cannot be created."
+      end
+    end
     return conf
   end
 
@@ -78,35 +87,35 @@ module Ripple
     end
   end
 
+  # Iterates over dropbox directory, returing paths and state hash for each file
+  # oldFileState should be a hash of paths to state hashes, same as return values
   def Ripple.walkDropbox(client, path, fileState, oldFileState)
     #Here we need to actually sync newest files.
-    areNewFiles = false
     begin
-      oldState = oldFileState.has_key?(path) ? oldFileState[path] : nil
-      fileState[path] = client.metadata(path, 10000, true, oldState)
-      areNewFiles = true
+      useState = (!oldFileState.nil? and oldFileState.has_key?(path) and oldFileState[path]["path"] == path)
+      oldState = useState ? oldFileState[path]["hash"] : nil
+      states = client.metadata(path, 10000, true, oldState)
     rescue DropboxNotModified
-      if oldFileState.has_key?(path)
-        fileState[path] = oldFileState[path]
-      end
-    end
-
-    if !areNewFiles
+      puts "Files have not changed."
       return nil
     end
 
-    files = []
-    if fileState[path]["is_dir"] and fileState[path].has_key?("contents")
-      fileState[path]["contents"].each { |x|
-        subs = Ripple.walkDropbox(client, x["path"], fileState, oldFileState)
+    files = { states["path"] => states }
+    #State represents a folder
+    if states["is_dir"] and states.has_key?("contents")
+      states["contents"].each{ |xx|
+        if !xx.nil?
+          files[xx["path"]] = xx
+        end
+        useState = (!oldFileState.nil? and oldFileState.has_key?(xx["path"]))
+        old = (useState ? oldFileState[xx["path"]]["hash"] : nil)
+        subs = Ripple.walkDropbox(client, xx["path"], fileState, old)
         if !subs.nil?
-          files = files + subs
+          files.merge!(subs)
         end
       }
-    else
-      files = [fileState[path]["path"]]
     end
-
+    
     return files
   end
 
@@ -116,6 +125,10 @@ module Ripple
       session, client, dropboxKeys = Ripple.connectToDropbox()
     rescue DropboxAuthError
       puts "Dropbox authorization failed."
+      Ripple.cleanup(conf, dropboxKeys)
+      return
+    rescue NameError
+      puts "Destination does not exist."
       Ripple.cleanup(conf, dropboxKeys)
       return
     end
@@ -129,10 +142,37 @@ module Ripple
     destDir = conf[:destinationDir]
 
     fileState = {}
-    oldFileState = {}
+    oldFileState = dropboxKeys[:files]
     files = Ripple.walkDropbox(client, '/', fileState, oldFileState)
-    p files
 
+    if files.nil?
+      files = oldFileState
+      Ripple.cleanup(conf, dropboxKeys)
+    else
+      files.keys.each { |x|
+        puts "Getting", x
+        file = client.get_file(x)
+        File.open(File.join(destDir, x), 'w') {|f| f.puts file}
+      }
+    end
+
+    conf[:dropbox][:sync].each { |ii|
+      Dir.glob(File.join(destDir, ii)).each { |oo|
+        if !File.directory?(oo)
+          up = File.open(oo)
+          upName = Pathname.new(oo).relative_path_from(Pathname.new(destDir)).to_s
+          upName = File.join("", upName)
+          if files.nil? or !files.has_key?(upName)
+            puts "Sending", upName
+            client.put_file(upName, up, true)
+          end
+        end
+      }
+    }
+
+    dropboxKeys[:files] = Ripple.walkDropbox(client, '/', fileState, {})
     Ripple.cleanup(conf, dropboxKeys)
+
+    return true
   end
 end
