@@ -14,10 +14,14 @@ module Ripple
     }
   }
 
-  def Ripple.connectToDropbox
+  DropboxKeyFile = "dropbox_session.yaml"
+  RippleConfigFile = "ripple.yaml"
+
+  def Ripple.connectToDropbox(path)
+    dropConf = File.join(path, DropboxKeyFile)
     #Load Dropbox API dropboxKeys from file, if applicable.
-    if File.exists?('dropbox_session.yaml')
-      dropboxKeys = YAML::load(File.read('dropbox_session.yaml'))
+    if File.exists?(dropConf)
+      dropboxKeys = YAML::load(File.read(dropConf))
     else
       puts "A Dropbox API key/secret is required for accessing your sync files."
       puts "You can visit https://www.dropbox.com/developers/apps to generate these."
@@ -57,12 +61,13 @@ module Ripple
     end
   end
 
-  def Ripple.loadConfiguration
+  def Ripple.loadConfiguration(path)
     conf = Ripple::DefaultConfiguration.dup 
 
+    ripConf = File.join(path, RippleConfigFile)
     # Load configuration and override any values that differ from the default.
-    if File.exists?('ripple.yaml')
-      loadedConf = YAML::load(File.read('ripple.yaml'))
+    if File.exists?(ripConf)
+      loadedConf = YAML::load(File.read(ripConf))
       conf.merge!(loadedConf)
     end
 
@@ -77,12 +82,14 @@ module Ripple
     return conf
   end
 
-  def Ripple.cleanup(conf, keys)
-    File.open('dropbox_session.yaml', 'w') do|file|
+  def Ripple.cleanup(conf, keys, path)
+    dropConfig = File.join(path, DropboxKeyFile)
+    File.open(dropConfig, 'w') do|file|
       file.puts keys.to_yaml
     end
 
-    File.open('ripple.yaml', 'w') do |file|
+    rippleConf = File.join(path, RippleConfigFile)
+    File.open(rippleConf, 'w') do |file|
       file.puts conf.to_yaml
     end
   end
@@ -119,23 +126,23 @@ module Ripple
     return files
   end
 
-  def Ripple.sync
-    conf = Ripple.loadConfiguration()
+  def Ripple.sync(path = "")
+    conf = Ripple.loadConfiguration(path)
     begin
-      session, client, dropboxKeys = Ripple.connectToDropbox()
+      session, client, dropboxKeys = Ripple.connectToDropbox(path)
     rescue DropboxAuthError
       puts "Dropbox authorization failed."
-      Ripple.cleanup(conf, dropboxKeys)
+      Ripple.cleanup(conf, dropboxKeys, path)
       return
     rescue NameError
       puts "Destination does not exist."
-      Ripple.cleanup(conf, dropboxKeys)
+      Ripple.cleanup(conf, dropboxKeys, path)
       return
     end
    
     if session.nil?
       puts "Could not connect to Dropbox."
-      Ripple.cleanup(conf, dropboxKeys)
+      Ripple.cleanup(conf, dropboxKeys, path)
       return
     end 
 
@@ -147,7 +154,7 @@ module Ripple
 
     if files.nil?
       files = oldFileState
-      Ripple.cleanup(conf, dropboxKeys)
+      Ripple.cleanup(conf, dropboxKeys, path)
     else
       files.keys.each { |x|
         puts "Getting", x
@@ -171,7 +178,7 @@ module Ripple
     }
 
     dropboxKeys[:files] = Ripple.walkDropbox(client, '/', fileState, {})
-    Ripple.cleanup(conf, dropboxKeys)
+    Ripple.cleanup(conf, dropboxKeys, path)
 
     return true
   end
