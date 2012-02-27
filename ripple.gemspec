@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.platform      = Gem::Platform::RUBY
   s.authors       = ["Jason Ziglar"]
   s.email         = ["jasedit@catexia.com"]
-  s.homepage      = ""
+  s.homepage      = "https://github.com/jasedit/ripple"
   s.summary       = %q{Dropbox interface for jekyll.}
   s.description   = %q{A gem providing a Dropbox syncing interface for jekyll, along with a cgi file to update jekyll.}
 
