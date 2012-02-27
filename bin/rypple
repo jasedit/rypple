@@ -1,0 +1,10 @@
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'rypple'
+
+configDir = File.join(ENV["HOME"], '.rypple')
+
+if File.exists?(configDir)
+  Rypple.sync(configDir)
+end
