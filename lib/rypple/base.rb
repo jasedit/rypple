@@ -26,10 +26,11 @@ module Rypple
     else
       puts "A Dropbox API key/secret is required for accessing your sync files."
       puts "You can visit https://www.dropbox.com/developers/apps to generate these."
-      puts "Please enter your Dropbox API key"
-      dropboxKeys['key'] = gets.chomp!
-      puts "Please enter your Dropbox API secret"
-      dropboxKeys['secret'] = gets.chomp!
+      print "Please enter your Dropbox API key:"
+      dropboxKeys = {}
+      dropboxKeys[:key] = gets.chomp!
+      print "Please enter your Dropbox API secret:"
+      dropboxKeys[:secret] = gets.chomp!
     end
 
     session = nil
@@ -97,7 +98,7 @@ module Rypple
 
   # Iterates over dropbox directory, returing paths and state hash for each file
   # oldFileState should be a hash of paths to state hashes, same as return values
-  def Rypple.walkDropbox(client, path, fileState, oldFileState)
+  def Rypple.walkDropbox(client, path, oldFileState)
     #Here we need to actually sync newest files.
     begin
       useState = (!oldFileState.nil? and oldFileState.has_key?(path) and oldFileState[path]["path"] == path)
@@ -114,7 +115,7 @@ module Rypple
       states["contents"].each{ |xx|
         useState = (!oldFileState.nil? and oldFileState.has_key?(xx["path"]))
         old = (useState ? oldFileState[xx["path"]] : nil)
-        subs = Rypple.walkDropbox(client, xx["path"], fileState, old)
+        subs = Rypple.walkDropbox(client, xx["path"], old)
         if !subs.nil?
           files.merge!(subs)
         end
@@ -148,9 +149,8 @@ module Rypple
 
     destDir = conf[:destinationDir]
 
-    fileState = {}
     oldFileState = dropboxKeys[:files]
-    files = Rypple.walkDropbox(client, '/', fileState, oldFileState)
+    files = Rypple.walkDropbox(client, '/', oldFileState)
 
     if !files.nil?
       files.keys.each { |x|
@@ -175,7 +175,7 @@ module Rypple
       }
     }
 
-    dropboxKeys[:files] = Rypple.walkDropbox(client, '/', fileState, {})
+    dropboxKeys[:files] = Rypple.walkDropbox(client, '/', {})
     Rypple.cleanup(conf, dropboxKeys, path)
 
     return true
