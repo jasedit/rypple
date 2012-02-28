@@ -84,16 +84,23 @@ module Rypple
     return conf
   end
 
-  def Rypple.cleanup(conf, keys, path)
+  def Rypple.saveConfig(conf, path)
     dropConfig = File.join(path, DropboxKeyFile)
     File.open(dropConfig, 'w') do|file|
       file.puts keys.to_yaml
     end
+  end
 
+  def Rypple.saveDropbox(keys, path)
     ryppleConf = File.join(path, RyppleConfigFile)
     File.open(ryppleConf, 'w') do |file|
       file.puts conf.to_yaml
     end
+  end
+
+  def Rypple.cleanup(conf, keys, path)
+    Rypple.saveConfig(conf, path)
+    Rypple.saveDropbox(keys, path)
   end
 
   # Iterates over dropbox directory, returing paths and state hash for each file
