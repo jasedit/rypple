@@ -30,7 +30,7 @@ module Rypple
     if dropboxKeys.has_key?(:session)
       session = DropboxSession.deserialize(dropboxKeys[:session])
     else
-      dropboxKeys[:access], session = Rypple.buildLoginSession()
+      dropboxKeys[:access_type], session = Rypple.buildLoginSession()
     end
 
     if session.nil?
