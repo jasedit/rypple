@@ -53,16 +53,18 @@ Require valid-user
 eos
 
 # Returns false if installation fails
-def Rypple.Install()
+def Rypple.Setup()
   puts "Configuring the Rypple update script for web use."
-  if !ENV.has_key?('HOME')
+  if File.exists?(ENV["HOME"])
     configBase = File.join(ENV["HOME"], 'ryppleSite')
+    puts "Please enter directory for Rypple Site. Default:", configBase
+  else
+    puts "Please enter directory for the new Rypple site."
   end
-  puts "Please enter directory for Rypple Site. Default:", configBase
   directory = gets.chomp!
-  
+ 
   if !directory.empty?
-    configBase = File.expand_path(directory)
+    configBase = File.expand_path(configBase)
   end
 
   if !File.exists?(configBase)
@@ -75,12 +77,14 @@ def Rypple.Install()
   end
 
   conf = Rypple.loadConfiguration(configBase)
+  conf[:destinationDir] = directory
   session, client, keys = Rypple.connectToDropbox(configBase)
   
   if !conf.nil? and !keys.nil?
     Rypple.cleanup(conf, keys, configBase)
   end
-  
+ 
+  baseCGI = DefaultCGI.dup 
   baseCGI.gsub!(/%%CONFIG_PATH/, configBase)
   
   choice = false
@@ -141,7 +145,7 @@ def Rypple.Install()
     baseCGI.gsub!(/%%COMMAND/, command + ' ' + args)
   end
   
-  ryppleDir = File.join(inDir, 'rypple')
+  ryppleDir = File.join(configBase, 'rypple')
   
   if !File.exists?(ryppleDir)
     begin
@@ -154,7 +158,7 @@ def Rypple.Install()
   File.open(File.join(ryppleDir, 'update.html'), 'w', 0644) { |f| f.puts DefaultUpdateForm }
   
   out = File.join(ryppleDir, 'update.cgi')
-  File.open(out, 'w', 0755) { |f| f.puts DefaultCGI }
+  File.open(out, 'w', 0755) { |f| f.puts baseCGI }
   
   puts "Should I enable basic user authentication for the update script? (Y/n):"
   
@@ -168,14 +172,14 @@ def Rypple.Install()
     pass = gets.chomp!.crypt(salt)
     authFile = File.join(configBase, '.htpasswd')
     File.open(authFile, 'w') { |f| f.puts "#{user}:#{pass}" }
-    htaccess.gsub!(/%%AUTH_FILE/, authFile)
-    File.open(File.join(ryppleDir, '.htaccess'), 'w') { |f| f.puts DefaultHTAccess }
+    htaccess = DefaultHTAccess.gsub(/%%AUTH_FILE/, authFile)
+    File.open(File.join(ryppleDir, '.htaccess'), 'w') { |f| f.puts htaccess }
   end
 
   puts "Attempting first update"
   
   if Rypple.sync(configBase)
-    puts `jekyll #{inDir} #{outDir}`
+    puts `jekyll #{configBase} #{outDir}`
   else
     puts "Rypple sync failed."
   end

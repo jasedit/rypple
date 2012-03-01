@@ -7,11 +7,12 @@ module Rypple
   require 'dropbox_sdk'
   require 'pathname'
 
-  ACCESS_TYPE = :app_folder
   DefaultConfiguration = {
     :destinationDir => './test',
     :dropbox => {
+      :root => '/',
       :sync => ['**'],
+      :access_type => :app_folder,
     }
   }
 
@@ -31,6 +32,11 @@ module Rypple
       dropboxKeys[:key] = gets.chomp!
       print "Please enter your Dropbox API secret:"
       dropboxKeys[:secret] = gets.chomp!
+      print "Should this API access be used in sandbox mode? (Y/n):"
+      answer = gets.downcase.chomp
+      if !answer.empty? and answer == 'n'
+        dropboxKeys[:access_type]= :dropbox
+      end
     end
 
     session = nil
@@ -54,7 +60,7 @@ module Rypple
       dropboxKeys[:session] = session.serialize()
     end
 
-    client = DropboxClient.new(session, ACCESS_TYPE)
+    client = DropboxClient.new(session, dropboxKeys[:access_type])
 
     if client.nil?
       return nil, nil, nil
@@ -84,14 +90,14 @@ module Rypple
     return conf
   end
 
-  def Rypple.saveConfig(conf, path)
+  def Rypple.saveDropbox(keys, path)
     dropConfig = File.join(path, DropboxKeyFile)
     File.open(dropConfig, 'w') do|file|
       file.puts keys.to_yaml
     end
   end
 
-  def Rypple.saveDropbox(keys, path)
+  def Rypple.saveConfig(conf, path)
     ryppleConf = File.join(path, RyppleConfigFile)
     File.open(ryppleConf, 'w') do |file|
       file.puts conf.to_yaml
@@ -157,14 +163,25 @@ module Rypple
     destDir = conf[:destinationDir]
 
     oldFileState = dropboxKeys[:files]
-    files = Rypple.walkDropbox(client, '/', oldFileState)
+    files = Rypple.walkDropbox(client, conf[:dropbox][:root], oldFileState)
 
+    rootLength = conf[:dropbox][:root].length
     if !files.nil?
-      files.keys.each { |x|
-        file = client.get_file(x)
-        dest = File.join(destDir, x)
-        File.makedirs(File.dirname(dest))
-        File.open(dest, 'w') {|f| f.puts file}
+      files.keys.each { |xx|
+        fileDest = xx[rootLength, xx.length]
+        matched = false
+        conf[:dropbox][:sync].each { |ii|
+          if File.fnmatch?(ii, xx, File::FNM_DOTMATCH)
+            matched = true
+            break
+          end
+        }
+        if matched
+          file = client.get_file(xx)
+          dest = File.join(destDir, fileDest)
+          File.makedirs(File.dirname(dest))
+          File.open(dest, 'w') {|f| f.puts file}
+        end
       }
     end
 
@@ -172,17 +189,15 @@ module Rypple
       Dir.glob(File.join(destDir, ii)).each { |oo|
         if !File.directory?(oo)
           upName = Pathname.new(oo).relative_path_from(Pathname.new(destDir)).to_s
-          upName = File.join("", upName)
+          upName = File.join("", conf[:dropbox][:root], upName)
           if files.nil? or !files.has_key?(upName)
-            up = File.open(oo)
-            client.put_file(upName, up, true)
-            up.close()
+            File.open(oo) { |f| client.put_file(upName, f, true) }
           end
         end
       }
     }
 
-    dropboxKeys[:files] = Rypple.walkDropbox(client, '/', {})
+    dropboxKeys[:files] = Rypple.walkDropbox(client, conf[:dropbox][:root], {})
     Rypple.cleanup(conf, dropboxKeys, path)
 
     return true

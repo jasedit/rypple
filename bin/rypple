@@ -5,7 +5,8 @@ require 'rubygems'
 require 'rypple'
 
 #Default options
-options = {:input => '.'}
+options = {:input => '.',
+           :setup => false,}
 
 opts = OptionParser.new do |opts|
   opts.banner = "Rypple Version: " + Rypple::VERSION + "\nUsage: rypple [options]"
@@ -14,7 +15,7 @@ opts = OptionParser.new do |opts|
 
   opts.on("-s", "--setup",
           "Runs setup routine for Rypple") do |ext|
-            options[:setup] = ext
+            options[:setup] = true
   end
 
   opts.on("-i", "--input [dir]",
@@ -28,13 +29,8 @@ opts = OptionParser.new do |opts|
   end
 end.parse!(ARGV)
 
-if options.has_key?(:setup)
-  puts "setup!"
-  exit
-end
-
-puts options[:input]
-
-if File.exists?(options[:input])
+if options[:setup]
+  Rypple.Setup()
+elsif File.exists?(options[:input])
   Rypple.sync(options[:input])
 end
