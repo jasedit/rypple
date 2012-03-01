@@ -15,16 +15,16 @@ module Rypple
     }
   }
 
-  DropboxKeyFile = "dropbox_session.yml"
+  DropboxKeyFile = ".dropbox_session.yml"
   RyppleConfigFile = "rypple.yml"
 
   def Rypple.connectToDropbox(path)
     session = nil
     dropboxKeys = {:access_type => :app_folder}
-    dropConf = File.join(path, DropboxKeyFile)
+    dropConfPath = File.join(path, DropboxKeyFile)
     #Load Dropbox API dropboxKeys from file, if applicable.
-    if File.exists?(dropConf)
-      dropboxKeys = YAML::load(File.read(dropConf))
+    if File.exists?(dropConfPath)
+      dropboxKeys = YAML::load(File.read(dropConfPath))
     end
 
     if dropboxKeys.has_key?(:session)
@@ -60,14 +60,6 @@ module Rypple
       conf.merge!(loadedConf)
     end
 
-    conf[:destinationDir] = File.expand_path(conf[:destinationDir])
-    if !File.directory?(conf[:destinationDir])
-      begin
-        Dir.mkdir(conf[:destinationDir])
-      rescue SystemCallError
-        raise RuntimeError, "Destination doesn't exist and cannot be created."
-      end
-    end
     return conf
   end
 
