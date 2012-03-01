@@ -21,10 +21,10 @@ module Rypple
   def Rypple.connectToDropbox(path)
     session = nil
     dropboxKeys = {:access_type => :app_folder}
-    dropConf = File.join(path, DropboxKeyFile)
+    dropConfPath = File.join(path, DropboxKeyFile)
     #Load Dropbox API dropboxKeys from file, if applicable.
-    if File.exists?(dropConf)
-      dropboxKeys = YAML::load(File.read(dropConf))
+    if File.exists?(dropConfPath)
+      dropboxKeys = YAML::load(File.read(dropConfPath))
     end
 
     if dropboxKeys.has_key?(:session)
