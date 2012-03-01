@@ -16,8 +16,8 @@ module Rypple
     }
   }
 
-  DropboxKeyFile = "dropbox_session.yaml"
-  RyppleConfigFile = "rypple.yaml"
+  DropboxKeyFile = "dropbox_session.yml"
+  RyppleConfigFile = "rypple.yml"
 
   def Rypple.connectToDropbox(path)
     dropConf = File.join(path, DropboxKeyFile)
