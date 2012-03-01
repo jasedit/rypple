@@ -2,17 +2,21 @@
 A tool for integrating some remote file store (e.g. Dropbox) with a static site generator (e.g. jekyll) with some tools to ease remote updating of the site.
 
 # Installation
-The easiest method to install Rypple is to use (RubyGems)[https://rubygems.org/]. To do so, simply install RubyGems, and at the command prompt type:
+The easiest method to install Rypple is to use [RubyGems](https://rubygems.org/). To do so, simply install RubyGems, and at the command prompt type:
+
     gem install rypple
 
-For some sites, such as (NSFN)[https://www.nearlyfreespeech.net/], this should be modified to:
+For some sites, such as [NSFN](https://www.nearlyfreespeech.net/), this should be modified to:
+
     RB_USER_INSTALL=true gem install rypple
 
 ## Configuration
 Once installed, Rypple needs to be configured for each site being synced by it. This is done through the rypple command, and can be initiated using the command:
+
     rypple -s
 
 Which kicks off the configuration process. This process will guide you through several important configuration options.
+
 1. Rypple site directory. This is the directory to which files will be saved - by default, this is set to $HOME/ryppleSite, but can be changed to any site you wish. This is not the location which will be publicly accessible, so please do not point this at your web server.
 2. Dropbox API Configuration
     1. Generate a Dropbox API key/secret pair from their website. IMPORTANT: When creating the key, there is a question about granting the API access to your entire Dropbox folder, or only a sandboxed folder. This option, as far as I can tell, is immutable - Rypple supports either, but be aware of the choice being made.
