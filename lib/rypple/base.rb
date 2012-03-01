@@ -12,7 +12,6 @@ module Rypple
     :dropbox => {
       :root => '/',
       :sync => ['**'],
-      :access_type => :app_folder,
     }
   }
 
@@ -20,36 +19,18 @@ module Rypple
   RyppleConfigFile = "rypple.yml"
 
   def Rypple.connectToDropbox(path)
+    session = nil
+    dropboxKeys = {:access_type => :app_folder}
     dropConf = File.join(path, DropboxKeyFile)
     #Load Dropbox API dropboxKeys from file, if applicable.
     if File.exists?(dropConf)
       dropboxKeys = YAML::load(File.read(dropConf))
-    else
-      puts "A Dropbox API key/secret is required for accessing your sync files."
-      puts "You can visit https://www.dropbox.com/developers/apps to generate these."
-      print "Please enter your Dropbox API key:"
-      dropboxKeys = {}
-      dropboxKeys[:key] = gets.chomp!
-      print "Please enter your Dropbox API secret:"
-      dropboxKeys[:secret] = gets.chomp!
-      print "Should this API access be used in sandbox mode? (Y/n):"
-      answer = gets.downcase.chomp
-      if !answer.empty? and answer == 'n'
-        dropboxKeys[:access_type]= :dropbox
-      end
     end
-
-    session = nil
 
     if dropboxKeys.has_key?(:session)
       session = DropboxSession.deserialize(dropboxKeys[:session])
     else
-      session = DropboxSession.new(dropboxKeys[:key], dropboxKeys[:secret])
-      session.get_request_token
-      authorize_url = session.get_authorize_url
-      puts "Visit #{authorize_url} to log in to Dropbox. Hit enter when you have done this."
-      gets
-      session.get_access_token
+      dropboxKeys[:access], session = Rypple.buildLoginSession()
     end
 
     if session.nil?
@@ -88,6 +69,29 @@ module Rypple
       end
     end
     return conf
+  end
+
+  def Rypple.buildLoginSession()
+    puts "A Dropbox API key/secret is required for accessing your sync files."
+    puts "You can visit https://www.dropbox.com/developers/apps to generate these."
+    print "Please enter your Dropbox API key:"
+    key = gets.chomp!
+    print "Please enter your Dropbox API secret:"
+    secret = gets.chomp!
+    access = :app_folder
+    print "Should this API access be used in sandbox mode? (Y/n):"
+    answer = gets.downcase.chomp
+    if !answer.empty? and answer == 'n'
+      access = :dropbox
+    end
+
+    session = DropboxSession.new(key, secret)
+    session.get_request_token
+    authorize_url = session.get_authorize_url
+    puts "Visit #{authorize_url} to log in to Dropbox. Hit enter when you have done this."
+    gets
+    session.get_access_token
+    return access, session
   end
 
   def Rypple.saveDropbox(keys, path)
