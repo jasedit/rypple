@@ -77,7 +77,7 @@ def Rypple.Setup()
   end
 
   conf = Rypple.loadConfiguration(configBase)
-  conf[:destinationDir] = directory
+  conf[:destinationDir] = File.expand_path(directory)
   session, client, keys = Rypple.connectToDropbox(configBase)
   
   if !conf.nil? and !keys.nil?
