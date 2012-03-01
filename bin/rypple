@@ -1,10 +1,40 @@
 #!/usr/bin/ruby
 
+require 'optparse'
 require 'rubygems'
 require 'rypple'
 
-configDir = File.join(ENV["HOME"], '.rypple')
+#Default options
+options = {:input => '.'}
 
-if File.exists?(configDir)
-  Rypple.sync(configDir)
+opts = OptionParser.new do |opts|
+  opts.banner = "Rypple Version: " + Rypple::VERSION + "\nUsage: rypple [options]"
+#  opts.separator ""
+#  opts.separator "Specific options:"
+
+  opts.on("-s", "--setup",
+          "Runs setup routine for Rypple") do |ext|
+            options[:setup] = ext
+  end
+
+  opts.on("-i", "--input [dir]",
+          "Directory to read configuration files and sync with Rypple.") do |ext|
+          options[:input] = ext
+  end
+
+  opts.on_tail("-h", "--help", "Help:") do
+    puts opts
+    exit
+  end
+end.parse!(ARGV)
+
+if options.has_key?(:setup)
+  puts "setup!"
+  exit
+end
+
+puts options[:input]
+
+if File.exists?(options[:input])
+  Rypple.sync(options[:input])
 end
