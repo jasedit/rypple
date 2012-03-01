@@ -60,14 +60,6 @@ module Rypple
       conf.merge!(loadedConf)
     end
 
-    conf[:destinationDir] = File.expand_path(conf[:destinationDir])
-    if !File.directory?(conf[:destinationDir])
-      begin
-        Dir.mkdir(conf[:destinationDir])
-      rescue SystemCallError
-        raise RuntimeError, "Destination doesn't exist and cannot be created."
-      end
-    end
     return conf
   end
 
