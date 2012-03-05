@@ -1,8 +1,7 @@
-require 'source'
+require 'rypple/syncs/sync'
 require 'dropbox_sdk'
 
-Sync::register('Dropbox') do
-
+class DropboxSync < Sync
   # Gets the login information for connecting to Dropbox, and configures the
   # sync to have a valid DropboxSession.
   def build_session
@@ -29,9 +28,12 @@ Sync::register('Dropbox') do
   def walk_dropbox path
     #Here we need to actually sync newest files.
     begin
-      new_states = @client.metadata(path, 10000, true, @file_state[path])
+      hash = if @dirs[path]
+             then @dirs[path]["hash"]
+             else nil end
+      new_states = @client.metadata(path, 10000, true, hash)
     rescue DropboxNotModified
-      puts "Files have not changed."
+      puts "#{path} has not changed."
       return nil
     end
 
@@ -40,7 +42,7 @@ Sync::register('Dropbox') do
       @dirs[new_states["path"]] = new_states
       new_states["contents"].each{ |xx|
         if xx["is_dir"]
-          walkDropbox(xx["path"])
+          walk_dropbox(xx["path"])
         else
           @files[xx["path"]] = xx["hash"]
         end
@@ -89,12 +91,13 @@ Sync::register('Dropbox') do
 
   def changes?
     walk_dropbox @root
-    return @files.empty?
+    return !@files.empty?
   end
 
   def changes
+    change_list = Array.new
     @files.each do |key, value|
-      puts "File updated #{key}"
+      puts key, value
     end
   end
 
@@ -106,7 +109,8 @@ Sync::register('Dropbox') do
     keys = {
       :session => @session.serialize,
       :access_type => @access_type,
-      :state => @state
+      :state => @state,
+      :dirs => @dirs
     }
 
     File.open(@session_path, 'w') { |f| f.puts keys.to_yaml }
@@ -116,7 +120,7 @@ Sync::register('Dropbox') do
 
   def to_map
     conf = {
-      :name => self.class::plugin_name,
+      :name => self.class.to_s,
       :root => @root,
       :sync => @sync,
       :session_file => @session_file

@@ -3,7 +3,6 @@
 require 'fileutils'
 require 'ftools'
 require 'yaml'
-require "rubygems"
 require 'dropbox_sdk'
 require 'pathname'
 require 'require_all'
@@ -41,8 +40,8 @@ module Rypple
     end
 
     @syncs = Array.new
-    @conf[:sync].each do |ii|
-      @syncs << Sync::create(ii[:name], ii)
+    @conf[:syncs].each do |ii|
+      @syncs << Object.const_get(ii[:name]).new(path, ii)
     end
 
     #@generators = Array.new
@@ -60,7 +59,7 @@ module Rypple
     #@generators.each { |ii|
     ryppleConf = File.join(path, RyppleConfigFile)
     File.open(ryppleConf, 'w') do |file|
-      file.puts conf.to_yaml
+      file.puts @conf.to_yaml
     end
   end
 end
