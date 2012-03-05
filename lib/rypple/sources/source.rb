@@ -1,18 +1,24 @@
 #!/usr/bin/ruby
 require '../plugin'
-require 'changes'
+require '../changes'
 
 # * Interface which represents the syncing portion of Rypple. These components
 # * sync files to/from external sources to the Rypple directory. This is a base
 # * class - specific interfaces are subclasses defined through +Sync::register+.
 class Sync
-  include Plugin
+  extend Plugin
 
+  attr_reader :provides_input
+  attr_reader :provides_output
   # Attribute indicating if this sync interface downloads files for Rypple
-  attr_reader input?
+  def input?
+    @provides_input
+  end
 
   # Attribute indicating if this sync interface stores files for Rypple.
-  attr_reader output?
+  def output?
+    @provides_output
+  end
 
   # Test to see if there are changes available to save. Returns true if there
   # are changes available for downloading.

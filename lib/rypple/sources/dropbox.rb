@@ -1,4 +1,5 @@
-require 'source.rb'
+require 'source'
+require 'dropbox_sdk'
 
 Sync::register('Dropbox') do
 
@@ -52,8 +53,10 @@ Sync::register('Dropbox') do
   def load path
     session_conf = YAML::load(File.read(@session_path))
 
-    @session = session_conf[:session] ?
-      DropboxSession.deserialize(session_conf[:session]) || nil
+    @session = if session_conf[:session]
+        then DropboxSession.deserialize(session_conf[:session])
+        else nil
+        end
 
     @access_type = session_conf[:access_type] || :app_folder
     @state = session_conf[:state] || nil
@@ -61,6 +64,8 @@ Sync::register('Dropbox') do
   end
 
   def initialize path, config
+    @provides_input = true
+    @provides_output = true
     #Read config values
     @root = config[:root] || '/'
     @sync = config[:sync] || ["**/*"]
@@ -80,14 +85,6 @@ Sync::register('Dropbox') do
     end
 
     @client = DropboxClient.new(@session, @access_type)
-  end
-
-  def input?
-    true
-  end
-
-  def output?
-    true
   end
 
   def changes?
@@ -119,6 +116,7 @@ Sync::register('Dropbox') do
 
   def to_map
     conf = {
+      :name => self.class::plugin_name,
       :root => @root,
       :sync => @sync,
       :session_file => @session_file
