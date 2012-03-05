@@ -7,6 +7,8 @@ require "rubygems"
 require 'dropbox_sdk'
 require 'pathname'
 
+require_all 'sources'
+
 module Rypple
 
   DefaultConfiguration = {
