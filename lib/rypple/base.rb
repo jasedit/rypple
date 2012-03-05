@@ -6,8 +6,9 @@ require 'yaml'
 require "rubygems"
 require 'dropbox_sdk'
 require 'pathname'
+require 'require_all'
 
-require_all 'sources'
+require_rel 'syncs/*.rb'
 
 module Rypple
 

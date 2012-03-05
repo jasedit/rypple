@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency "jekyll"
   s.add_runtime_dependency "dropbox-sdk"
+  s.add_runtime_dependency "require_all"
 
   s.files = `git ls-files`.split("\n")
   s.test_files = `git ls-files -- {test,spec,features}/*`.split("\n")
