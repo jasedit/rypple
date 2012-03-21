@@ -20,10 +20,19 @@ module Rypple
   def self.sync path
     Rypple::load path
 
+    change_list = Array.new
     @syncs.each do |sync|
       if sync.changes?
-        sync.changes
+        change_list.concat(sync.changes)
       end
+    end
+
+    change_list.each do |xx|
+      xx.apply path
+    end
+
+    @syncs.each do |sync|
+      sync.save change_list
     end
 
     Rypple::save path

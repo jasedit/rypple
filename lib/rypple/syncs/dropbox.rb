@@ -1,5 +1,8 @@
+require 'rypple/changes'
 require 'rypple/syncs/sync'
 require 'dropbox_sdk'
+
+require 'set'
 
 class DropboxSync < Sync
   # Gets the login information for connecting to Dropbox, and configures the
@@ -28,10 +31,10 @@ class DropboxSync < Sync
   def walk_dropbox path
     #Here we need to actually sync newest files.
     begin
-      hash = if @dirs[path]
-             then @dirs[path]["hash"]
+      rev = if @dirs[path]
+             then @dirs[path]["rev"]
              else nil end
-      new_states = @client.metadata(path, 10000, true, hash)
+      new_states = @client.metadata(path, 10000, true, rev)
     rescue DropboxNotModified
       puts "#{path} has not changed."
       return nil
@@ -44,11 +47,11 @@ class DropboxSync < Sync
         if xx["is_dir"]
           walk_dropbox(xx["path"])
         else
-          @files[xx["path"]] = xx["hash"]
+          @files[xx["path"]] = xx["rev"]
         end
       }
     else
-      @files[new_states['path']] = new_states["hash"]
+      @files[new_states['path']] = new_states["rev"]
     end
   end
 
@@ -61,7 +64,6 @@ class DropboxSync < Sync
         end
 
     @access_type = session_conf[:access_type] || :app_folder
-    @state = session_conf[:state] || nil
     @dirs = session_conf[:dirs] || Hash.new
   end
 
@@ -72,11 +74,13 @@ class DropboxSync < Sync
     @root = config[:root] || '/'
     @sync = config[:sync] || ["**/*"]
     @session_file = config[:session_file] || ".dropbox.yml"
-  
+ 
+    @root = ("/" + @root) if @root[0] != "/"
     @session_path = File.join(path, @session_file)
     @path = path
     @dirs = Hash.new
     @files = Hash.new
+    @changes = Array.new
 
     if File.exists?(@session_path)
       load(@session_path)
@@ -91,25 +95,59 @@ class DropboxSync < Sync
 
   def changes?
     walk_dropbox @root
-    return !@files.empty?
+    !@files.empty?
   end
 
   def changes
-    change_list = Array.new
-    @files.each do |key, value|
-      puts key, value
+    matches = Hash.new
+    files_left = @files.keys.to_set
+    @sync.each do |xx|
+      new_matches = Array.new
+      files_left.each do |ii|
+        if File.fnmatch?(xx, ii, File::FNM_DOTMATCH)
+          matches[ii] = @files[ii]
+          new_matches << ii
+        end
+      end
+      files_left = files_left - new_matches.to_set
     end
+
+    matches.each do |key, value|
+      puts "Attempting to get #{key}"
+      file = @client.get_file(key, value)
+      offset = Pathname.new(key).relative_path_from(Pathname.new(@root)).to_s
+      puts "#{offset}, #{@root}"
+      @changes << Rypple::Add.new(offset, file)
+    end
+
+    @changes
   end
 
   def save files
     save_session
+    file_set = files.to_set
+    change_set = @changes.to_set
+
+    new_files = file_set - change_set
+
+    new_files.each do |ff|
+      src_path = File.join(@root, ff.src)
+      case ff.class.to_s
+      when 'Add'
+        @client.put_file(src_path, ff.file, false, @files[src_path])
+      when 'Move'
+#        @client.file_move(
+      if ff.file
+      else
+        @client.file_delete(src_path)
+      end
+    end
   end
 
   def save_session
     keys = {
       :session => @session.serialize,
       :access_type => @access_type,
-      :state => @state,
       :dirs => @dirs
     }
 
