@@ -87,7 +87,6 @@ class DropboxSync < Sync
     @sync = config[:sync] || ["**/*"]
     @session_file = config[:session_file] || ".dropbox.yml"
  
-    @root = ("/" + @root) if @root[0] != "/"
     @session_path = File.join(path, @session_file)
     @path = path
     @dirs = Hash.new
