@@ -21,7 +21,7 @@ class JekyllBuilder
   end
 
   def process_directory dir
-    if File.exists? dir && @output
+    if File.exists? dir && File.exists? @output
       `jekyll #{dir} #{@output}`
     end
   end
