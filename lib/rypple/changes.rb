@@ -15,8 +15,11 @@ require 'fileutils'
 module Rypple
 
   class FileChanges
+    #Absolute path to this file on disk
     attr_reader :dest
+    #Relative path to the file from the sync
     attr_reader :src
+    #Contents of the file, if available
     attr_reader :file
     def initialize src
       @src = src
