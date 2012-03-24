@@ -18,12 +18,13 @@ require 'pathname'
 require 'require_all'
 
 require_rel 'syncs/*.rb'
+require_rel 'builders/*.rb'
 
 module Rypple
 
   DefaultConfiguration = {
       :syncs => [], 
-      :generators => [],
+      :builders => [],
   }
   RyppleConfigFile = "_rypple.yml"
 
@@ -45,6 +46,9 @@ module Rypple
       sync.save change_list
     end
 
+    @builders.each do |builder|
+      builder.process_directory path
+    end
     Rypple::save path
   end
 
@@ -63,10 +67,11 @@ module Rypple
       @syncs << Object.const_get(ii[:name]).new(path, ii)
     end
 
-    #@generators = Array.new
-    #conf[:generators].each do |key, value|
-    #  @generators << 
-
+    #Instantiate all builders for use.
+    @builders = Array.new
+    @conf[:builders].each do |ii|
+      @builders <<  Object.const_get(ii[:name]).new(ii)
+    end
   end
 
   def self.save path
