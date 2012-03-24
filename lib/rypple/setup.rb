@@ -36,10 +36,15 @@ cgi = CGI.new
 
 puts cgi.header
 
-puts "<h1>Rippling . . .</h1>"
+puts "<h1>Ryppling . . .</h1>"
 if Rypple.sync(configPath)
   puts "<h1>Generating Static Site</h1>"
-  puts `%%COMMAND #{inDir} #{outDir}`
+  result = `%%COMMAND #{inDir} #{outDir}`
+  result.gsub!(/\n/, '<br/>')
+  puts result
+
+puts "<br/>"
+%%FORM
 end
 eos
 
@@ -156,7 +161,8 @@ def Rypple.Setup()
     args = gets.chomp!
     baseCGI.gsub!(/%%COMMAND/, command + ' ' + args)
   end
-  
+
+  baseCGI.gsub!(/%%FORM/, DefaultUpdateForm)  
   ryppleDir = File.join(configBase, 'rypple')
   
   if !File.exists?(ryppleDir)
