@@ -148,10 +148,9 @@ class DropboxSync < Sync
       when 'Add'
         @client.put_file(src_path, ff.file, false, @files[src_path])
       when 'Move'
-#        @client.file_move(
-      if ff.file
-      else
-        @client.file_delete(src_path)
+        @client.file_move(src_path, ff.dest)
+      when 'Remove'
+        @client.file_delete(ff.dest)
       end
     end
   end
@@ -165,6 +164,7 @@ class DropboxSync < Sync
 
     File.open(@session_path, 'w') { |f| f.puts keys.to_yaml }
   end
+
   def build_changes
   end
 
