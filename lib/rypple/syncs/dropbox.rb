@@ -124,10 +124,8 @@ class DropboxSync < Sync
     end
 
     matches.each do |key, value|
-      puts "Attempting to get #{key}"
       file = @client.get_file(key, value)
       offset = Pathname.new(key).relative_path_from(Pathname.new(@root)).to_s
-      puts "#{offset}, #{@root}"
       @changes << Rypple::Add.new(offset, file)
     end
 
