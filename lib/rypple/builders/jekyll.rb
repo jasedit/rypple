@@ -20,9 +20,15 @@ class JekyllBuilder
     @output = config.has_key?(:web_dir) ? config[:web_dir] : nil
   end
 
+  def save_config
+    config = {:web_dir => @output}
+  end
+
   def process_directory dir
-    if File.exists? dir && File.exists? @output
-      `jekyll #{dir} #{@output}`
+    dir = File.expand_path(dir)
+    out_dir = File.expand_path(@output)
+    if File.exists?(dir) && File.exists?(out_dir)
+      `jekyll #{dir} #{out_dir}`
     end
   end
 end
