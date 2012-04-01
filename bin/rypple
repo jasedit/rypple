@@ -5,12 +5,11 @@ require 'rypple'
 
 #Default options
 options = {:input => '.',
-           :setup => false,}
+           :setup => false,
+           :version => false}
 
 opts = OptionParser.new do |opts|
   opts.banner = "Rypple Version: " + Rypple::VERSION + "\nUsage: rypple [options]"
-#  opts.separator ""
-#  opts.separator "Specific options:"
 
   opts.on("-s", "--setup",
           "Runs setup routine for Rypple") do |ext|
@@ -20,6 +19,12 @@ opts = OptionParser.new do |opts|
   opts.on("-i", "--input [dir]",
           "Directory to read configuration files and sync with Rypple.") do |ext|
           options[:input] = ext
+  end
+
+  opts.on("-v", "--version",
+          "Prints Rypple version.") do |ext|
+    puts "Rypple version: " + Rypple::VERSION
+    exit
   end
 
   opts.on_tail("-h", "--help", "Help:") do
