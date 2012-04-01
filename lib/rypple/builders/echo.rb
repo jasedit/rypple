@@ -19,6 +19,10 @@ class EchoBuilder
     puts "Configuring EchoBuilder"
   end
 
+  def to_map
+    config = Hash.new
+  end
+
   def process_directory dir
     if File.exists? dir
       puts "I would process #{dir}, but I am le tired."

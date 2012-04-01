@@ -79,8 +79,10 @@ module Rypple
     @syncs.each { |sync| sync_configs << sync.to_map }
     @conf[:syncs] = sync_configs
 
-    #gen_configs = Array.new
-    #@generators.each { |ii|
+    build_configs = Array.new
+    @builders.each { |builder| build_configs << builder.to_map }
+    @conf[:builders] = build_configs
+
     ryppleConf = File.join(path, RyppleConfigFile)
     File.open(ryppleConf, 'w') do |file|
       file.puts @conf.to_yaml

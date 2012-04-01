@@ -14,6 +14,9 @@ module Builder
   def initialize config
     raise NotImplementedError.new
   end
+  def to_map
+    Hash.new
+  end
   def process_directory dir
     raise NotImplementedError.new
   end

@@ -20,7 +20,7 @@ class JekyllBuilder
     @output = config.has_key?(:web_dir) ? config[:web_dir] : nil
   end
 
-  def save_config
+  def to_map
     config = {:web_dir => @output}
   end
 
