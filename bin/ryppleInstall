@@ -23,10 +23,9 @@ cgi = CGI.new
 
 puts cgi.header
 
-puts "<h1>Rippling . . .</h1>"
+puts "<h1>Ryppling . . .</h1>"
 if Rypple.sync(configPath)
   puts "<h1>Generating Static Site</h1>"
-  puts `%%COMMAND #{inDir} #{outDir}`
 end
 eos
 
